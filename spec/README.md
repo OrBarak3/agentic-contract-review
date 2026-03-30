@@ -12,4 +12,4 @@ This folder contains a complete project spec for a portfolio project aligned to 
 
 ## Project One-Liner
 
-Build an agentic contract review and approval orchestrator that ingests contracts, extracts clauses, flags risk, proposes redlines, routes high-risk cases to human reviewers, and tracks measurable business value (time saved, risk coverage, and throughput).
+Build an agentic contract review and approval orchestrator that ingests contracts, extracts clauses, flags risk, proposes redlines, routes high-risk cases to human reviewers, and tracks measurable business value (agent-hours unlocked, risk coverage, and throughput).

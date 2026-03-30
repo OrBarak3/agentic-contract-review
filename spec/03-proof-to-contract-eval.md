@@ -7,8 +7,9 @@ Define how to prove technical and business value in a pilot so stakeholders can 
 ## Pilot Hypotheses
 
 1. The workflow reduces contract review cycle time by at least 35%.
-2. Risk detection quality is high enough for controlled production usage.
-3. Human review load decreases without losing governance quality.
+2. The workflow unlocks measurable agent-hours of reviewer capacity that the team can reallocate to higher-value work.
+3. Risk detection quality is high enough for controlled production usage.
+4. Human review load decreases without losing governance quality.
 
 ## Evaluation Dataset
 
@@ -34,8 +35,12 @@ Define how to prove technical and business value in a pilot so stakeholders can 
 
 ### Workflow Metrics
 
+- Definition: `agent-hours` are hours of reviewer time avoided by the workflow and reallocated to higher-value work; this is the primary business-capacity metric for the pilot.
 - Median review turnaround time
   - Target: 35%+ improvement from baseline
+- Agent-hours of review capacity unlocked
+  - Formula: `(baseline median review minutes - pilot median review minutes) * contracts reviewed per week / 60`
+  - Target: >= 6 hours/week/reviewer
 - Throughput (contracts/week/reviewer)
   - Target: 30%+ uplift
 - Human escalation rate
@@ -56,6 +61,7 @@ Define how to prove technical and business value in a pilot so stakeholders can 
 2. Pilot: same contract categories through the orchestrator with human oversight.
 3. Compare:
    - cycle time
+   - agent-hours of capacity unlocked
    - error/risk misses
    - reviewer effort hours
    - stakeholder confidence (qualitative rubric)
@@ -66,13 +72,14 @@ Pilot can move toward production rollout only if all are true:
 
 1. No critical governance violations in holdout.
 2. High-risk recall threshold met.
-3. Business time-saving threshold met.
+3. Business time-saving and agent-hours threshold met.
 4. Stakeholder sign-off from legal + business owner.
 5. Incident playbook tested in at least one tabletop run.
 
 ## Reporting Pack (for customer/recruiter narrative)
 
 - One-page KPI scorecard (baseline vs pilot).
+- Agent-hours summary showing where reviewer capacity was reallocated.
 - Top 10 error patterns and mitigations.
 - Policy exceptions log.
 - Recommended rollout scope and guardrails.

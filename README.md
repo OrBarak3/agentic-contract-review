@@ -2,7 +2,7 @@
 
 An agentic contract review and approval orchestrator built as a portfolio project for a Field/Customer Solutions Engineer role.
 
-The system ingests contracts, extracts clauses via LLM agents, classifies risk against a deterministic policy engine, routes high-risk cases to human reviewers, and tracks measurable business value across the full pilot lifecycle.
+The system ingests contracts, extracts clauses via LLM agents, classifies risk against a deterministic policy engine, routes high-risk cases to human reviewers, and tracks measurable business value across the full pilot lifecycle, including agent-hours of review capacity unlocked.
 
 ## What this demonstrates
 
@@ -83,8 +83,10 @@ Full design and evaluation documentation is in [`spec/`](./spec/):
 | High-risk clause recall | >= 90% |
 | False-positive rate | < 15% |
 | Auto-processed low-risk clauses | >= 60% |
-| Agent-hours of capacity unlocked | measured per pilot |
+| Agent-hours of review capacity unlocked | >= 6 hours/week/reviewer |
 | Full audit trace coverage | 100% |
+
+`Agent-hours` means reviewer time the workflow gives back to the team by automating repeatable review work. In this project, it is measured as hours of manual review time avoided and reallocated to higher-value legal or procurement work.
 
 ## Tech stack
 
