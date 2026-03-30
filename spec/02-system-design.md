@@ -74,6 +74,7 @@
    - Sends updates to external systems via webhooks/API clients.
 7. Audit & Metrics Pipeline
    - Stores all states/events for compliance and measurement.
+   - Computes business KPIs, including `agent-hours`, defined as reviewer hours avoided by the orchestrator and returned to the team as usable capacity.
 
 ## Governance Model
 

@@ -17,7 +17,7 @@ Show the ability to design, build, validate, and present a production-style AI w
 
 ## Problem Statement
 
-Legal and procurement teams spend too long reviewing repetitive contract language. Manual review creates bottlenecks, inconsistent risk decisions, and weak visibility into cycle time and clause-level risk.
+Legal and procurement teams spend too long reviewing repetitive contract language. Manual review creates bottlenecks, inconsistent risk decisions, and weak visibility into cycle time, clause-level risk, and how many reviewer agent-hours are consumed by repeatable work.
 
 ## Product Outcome
 
@@ -56,12 +56,13 @@ Given a contract document, the system should:
 
 1. As a reviewer, I want high-risk clauses pre-flagged so I can focus on critical issues.
 2. As a legal manager, I want a clear rationale for each risk flag so decisions are explainable.
-3. As a pilot owner, I want baseline vs pilot metrics to justify rollout.
+3. As a pilot owner, I want baseline vs pilot metrics, including agent-hours of capacity unlocked, to justify rollout.
 4. As a SE/CE, I want reusable templates and policy packs for new customers.
 
 ## Success Criteria (Pilot)
 
 - Median review turnaround reduced by at least 35%.
+- Agent-hours of review capacity unlocked by at least 6 hours/week/reviewer.
 - High-risk clause recall at least 90%.
 - False-positive risk flag rate below 15%.
 - At least 60% of low-risk clauses auto-processed with human spot checks.

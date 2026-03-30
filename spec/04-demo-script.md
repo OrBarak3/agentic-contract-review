@@ -40,6 +40,7 @@ Show a believable end-to-end enterprise workflow that combines AI agents, policy
    - Decision trace log (model, prompt, policy, actor, timestamp).
 6. KPI Snapshot (3 minutes)
    - Baseline vs pilot metrics dashboard.
+   - Call out agent-hours of reviewer capacity unlocked as the headline business outcome.
    - Discuss rollout readiness criteria.
 
 ## Screens or Artifacts to Prepare
