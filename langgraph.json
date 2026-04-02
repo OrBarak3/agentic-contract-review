@@ -1,0 +1,10 @@
+{
+  "dependencies": [
+    "."
+  ],
+  "graphs": {
+    "contract_review_workflow": "./contract_review_langgraph/graph.py:graph"
+  },
+  "env": "./.env"
+}
+

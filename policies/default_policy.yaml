@@ -1,0 +1,14 @@
+name: default-demo-policy
+version: v1
+routing:
+  human_review_confidence_threshold: 0.80
+  auto_pass_confidence_threshold: 0.90
+  blocked_clause_types:
+    - liability
+    - indemnity
+    - termination
+  required_fields:
+    - clause_type
+    - risk_level
+    - summary
+
