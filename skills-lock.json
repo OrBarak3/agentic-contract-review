@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "langgraph": {
+      "source": "smithery.ai",
+      "sourceType": "well-known",
+      "computedHash": "e64c4c4fdf8ff727e8df9a018fb8c51a2a2667d9421d5075255052908ad07aad"
+    }
+  }
+}

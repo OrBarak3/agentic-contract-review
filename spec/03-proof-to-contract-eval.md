@@ -4,6 +4,19 @@
 
 Define how to prove technical and business value in a pilot so stakeholders can confidently move from proof to contract.
 
+## Current MVP Note
+
+The implemented repo is an MVP that already supports contract parsing, extraction, policy routing, human review, and audit reporting. It does not yet include redlines, OCR for scanned PDFs, or downstream business-system integrations, so pilot evaluation should focus on review quality, routing quality, and reviewer time saved rather than post-approval automation.
+
+## Current Evidence Sources
+
+Today, the repo can support pilot-style evidence gathering from:
+
+- fixture-based low-risk and high-risk demo contracts
+- unit tests covering parsing, heuristic extraction, and policy routing
+- SQLite run records and event logs
+- Markdown per-run reports for reviewer-friendly inspection
+
 ## Pilot Hypotheses
 
 1. The workflow reduces contract review cycle time by at least 35%.
@@ -30,7 +43,7 @@ Define how to prove technical and business value in a pilot so stakeholders can 
   - Target: >= 0.80
 - Required field extraction F1
   - Target: >= 0.92
-- Redline acceptance rate (human accepted with minor/no edits)
+- Reviewer edit acceptance rate
   - Target: >= 0.60 in pilot
 
 ### Workflow Metrics
@@ -52,8 +65,8 @@ Define how to prove technical and business value in a pilot so stakeholders can 
   - Target: < 5 minutes (pilot expectation)
 - Processing success rate
   - Target: >= 98%
-- Integration delivery success
-  - Target: >= 99% with retries
+- Audit artifact coverage
+  - Target: 100% of runs emit a decision trace and report
 
 ## Baseline vs Pilot Design
 
@@ -83,6 +96,8 @@ Pilot can move toward production rollout only if all are true:
 - Top 10 error patterns and mitigations.
 - Policy exceptions log.
 - Recommended rollout scope and guardrails.
+- MVP caveats log documenting what remained manual during the pilot.
+- A small appendix showing example run artifacts from the current MVP.
 
 ## Experiment Backlog (Post-Pilot)
 

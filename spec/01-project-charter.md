@@ -8,6 +8,19 @@ Agentic Contract Review + Approval Orchestrator
 
 Show the ability to design, build, validate, and present a production-style AI workflow that sits at the intersection of engineering and customer outcomes.
 
+## Current Implementation Status
+
+The current repo includes a runnable LangGraph Studio MVP. It covers:
+
+1. Local contract intake by filesystem path.
+2. Parsing and clause chunking for `TXT`, `MD`, `DOCX`, and selectable-text `PDF` documents.
+3. Provider-backed extraction for `openai`, `gemini`, and `grok`, with heuristic fallback available for demo resilience.
+4. Deterministic policy routing from local YAML policy packs.
+5. Human review via LangGraph interrupt/resume with `approve`, `edit`, or `reject`.
+6. Local audit logging and Markdown reporting.
+
+The broader product vision below remains valid, but some items are still roadmap rather than implemented MVP features.
+
 ## Why This Project Fits the Role
 
 - Demonstrates hands-on Python + API integration + LLM workflow orchestration.
@@ -25,25 +38,29 @@ Given a contract document, the system should:
 
 1. Parse and extract key clauses and metadata.
 2. Classify clause risk against policy rules.
-3. Generate suggested redlines and rationale.
-4. Route high-risk or low-confidence outputs to human review.
-5. Log every decision for audit and quality evaluation.
+3. Route high-risk or low-confidence outputs to human review.
+4. Log every decision for audit and quality evaluation.
+5. Optionally expand later into redline generation and downstream system actions.
 
 ## In Scope
 
-- Contract ingestion (upload + webhook source).
+- Contract ingestion from local files for the MVP.
 - Clause extraction + risk classification.
-- Suggested redline generation.
-- Human-in-the-loop review queue.
+- Human-in-the-loop review step.
 - Approval/decision workflow.
-- Integrations (at least 2): CRM/helpdesk/ticketing/e-sign.
-- Metrics dashboard for pilot outcomes.
+- Local audit trail and run reports.
+- Policy packs that can be reused across demos/customers.
+- Fixture-based low-risk and high-risk demo runs.
 
 ## Out of Scope (v1)
 
 - Full multi-tenant authorization model.
 - Deep custom training/fine-tuning pipeline.
 - Full legal knowledge graph.
+- OCR for scanned PDFs.
+- External CRM / ticketing / e-sign integrations.
+- Redline generation.
+- Hosted upload flows or email/drive ingestion.
 - Production-grade front-end polish beyond demo quality.
 
 ## Personas
@@ -74,3 +91,5 @@ Given a contract document, the system should:
 - Deterministic policy layer for final approval routing.
 - Retry and fallback behavior for model/API failures.
 - Reproducibility (versioned prompts, model IDs, and policy bundles).
+- Demoability in LangGraph Studio with a reviewer interrupt path that can be resumed deterministically.
+- Local inspectability of artifacts so a reviewer can trace a run without extra infrastructure.

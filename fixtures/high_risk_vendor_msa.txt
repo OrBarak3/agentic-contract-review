@@ -1,0 +1,16 @@
+1. Services
+
+Vendor will provide implementation and support services for the platform described in the order form.
+
+2. Indemnity
+
+Customer shall indemnify, defend, and hold harmless Vendor and its affiliates from any and all claims, damages, and losses arising from Customer's use of the services.
+
+3. Liability
+
+Vendor's liability is unlimited for any claim related to this Agreement, including indirect, consequential, and punitive damages.
+
+4. Renewal
+
+This Agreement renews automatically for successive one-year terms unless Customer provides written notice at least 90 days before the renewal date.
+

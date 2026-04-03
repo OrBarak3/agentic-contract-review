@@ -2,42 +2,57 @@
 
 ## Build Objective
 
-Deliver a portfolio-grade MVP with working integrations, governance controls, and pilot-ready metrics.
+Deliver a portfolio-grade MVP with governance controls and pilot-ready metrics, then expand it into a more customer-complete workflow.
+
+## Current Status
+
+The repo now has the core MVP implemented:
+
+- LangGraph Studio graph with 7 business nodes
+- local file-path intake
+- parsing and clause chunking for `TXT`, `MD`, `DOCX`, and selectable-text `PDF`
+- provider-backed extraction with heuristic fallback
+- deterministic policy routing
+- Studio-based human review interrupt
+- SQLite / JSONL / Markdown audit outputs
+- fixture contracts and unit tests for key core behaviors
+
+The roadmap below should be read as the next steps after that MVP baseline.
 
 ## Assumptions
 
 - Single developer.
 - Python-first backend.
-- Simple web UI or notebook-based reviewer interface.
-- Mock or sandbox API credentials are available for integrations.
+- LangGraph Studio is the primary operator surface for the MVP.
+- Mock or sandbox API credentials are available for provider testing.
 
-## Week 1 (Core Workflow)
+## Next Build Window (Core Expansion)
 
 ### Day 1-2: Foundations
 
-- Set up repo structure and config management.
-- Define core schemas (contract, clause, decision trace).
-- Implement ingestion endpoint and queue stub.
+- Tighten graph state schemas and add richer fixture coverage.
+- Add `.env` presets and provider-specific setup notes.
+- Improve run metadata and audit query ergonomics.
 
 ### Day 3-4: Extraction + Policy
 
-- Build parser/OCR pipeline for input docs.
-- Implement LLM extraction pipeline with typed schema validation.
-- Implement policy/risk rules and routing logic.
+- Improve clause chunking quality for real-world contract formatting.
+- Add retrieval grounding against approved clauses or policy exemplars.
+- Extend policy packs with customer-specific thresholds and exceptions.
 
 ### Day 5-6: Human-in-the-Loop
 
-- Build reviewer queue API and minimal interface.
-- Capture reviewer edits and final decisions.
-- Persist full audit trace with version metadata.
+- Add a lightweight reviewer UI or FastAPI wrapper over the interrupt/resume flow.
+- Capture richer reviewer annotations and override reasons.
+- Add audit views for comparing model output versus reviewer edits.
 
-### Day 7: Integration Adapters
+### Day 7: Integrations
 
-- Integrate CRM update flow.
-- Integrate ticketing workflow.
-- Add retry/error handling.
+- Add one post-decision integration stub, ideally a CRM-style status sync.
+- Add retry/error handling around that adapter.
+- Document which integration contracts are reusable for the next customer.
 
-## Week 2 (Proof + Presentation)
+## Following Build Window (Proof + Presentation)
 
 ### Day 8-9: Evaluation Harness
 
@@ -47,13 +62,14 @@ Deliver a portfolio-grade MVP with working integrations, governance controls, an
 
 ### Day 10-11: Reliability + Hardening
 
-- Add fallback model path and timeout handling.
+- Add provider-specific retry and timeout behavior.
 - Add idempotency and duplicate event protection.
-- Add structured logging and alert hooks.
+- Add policy-pack validation and better failure reporting.
+- Decide whether to persist prompt/version metadata for stronger audit lineage.
 
 ### Day 12: Demo Surface
 
-- Build simple dashboard or CLI report:
+- Improve the Studio demo surface and add a lightweight external viewer if needed:
   - contract statuses
   - risk routing outcomes
   - KPI scorecard
@@ -74,20 +90,16 @@ Deliver a portfolio-grade MVP with working integrations, governance controls, an
 
 ```text
 project/
-  app/
-    ingestion/
-    parsing/
-    agents/
-    policy/
-    routing/
-    integrations/
-    audit/
-  eval/
-    datasets/
-    scripts/
-  demo/
-    fixtures/
-    scripts/
+  contract_review_langgraph/
+    graph.py
+    nodes.py
+    parsing.py
+    llm.py
+    policies.py
+    audit.py
+  fixtures/
+  policies/
+  tests/
   spec/
   README.md
 ```
@@ -98,15 +110,27 @@ project/
    - Mitigation: add parser normalization and confidence-based routing.
 2. Risk: over-reliance on model confidence.
    - Mitigation: policy engine as mandatory gate before actions.
-3. Risk: integration instability.
-   - Mitigation: retry queue, idempotency keys, dead-letter handling.
+3. Risk: LangGraph Studio demo is strong for technical audiences but not enough for end-user workflow realism.
+   - Mitigation: add a thin reviewer-facing UI or wrapper API as the next layer.
 4. Risk: weak recruiter narrative.
    - Mitigation: always present baseline vs pilot metrics, not only architecture.
+5. Risk: MVP/docs drift.
+   - Mitigation: update the spec pack and README whenever the implemented surface changes.
 
 ## Definition of Done
 
 - End-to-end contract flow works on sample set.
 - High-risk clauses correctly route to human review.
-- At least two external system integrations are demonstrated.
 - Audit trail captures decision lineage.
 - Pilot KPI report can be generated from run data.
+- One next-step expansion is added beyond the MVP, such as retrieval grounding or a post-decision integration.
+- Docs remain aligned with the actual implemented scope.
+
+## CE Handoff Kit
+
+Document these items for the next engineer or customer-facing teammate:
+
+- Which policy-pack fields are customer-specific versus reusable defaults
+- Which providers are supported and how to configure them
+- Which fixtures best demonstrate low-risk and high-risk behavior
+- What the current MVP does not yet do, so customers are not over-promised
