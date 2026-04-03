@@ -21,6 +21,11 @@ dependencies = [
 dev = [
   "pytest>=8.3.0"
 ]
+api = [
+  "fastapi>=0.115.0",
+  "uvicorn[standard]>=0.32.0",
+  "python-multipart>=0.0.18",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
