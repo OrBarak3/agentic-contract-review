@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import os
 import tempfile
 import uuid
@@ -131,10 +132,10 @@ async def run_contract(
 
         # "provider": "openai" with no OPENAI_API_KEY triggers heuristic fallback.
         # To use a real LLM, set the relevant API key in the environment.
-        # TODO: wrap in asyncio.to_thread() if adding real LLM support (blocking call).
-        graph.invoke(
+        await asyncio.to_thread(
+            graph.invoke,
             {"contract_path": str(tmp_path), "provider": "openai"},
-            config=config,
+            config,
         )
 
         interrupt_payload = _get_interrupt_payload(config)
@@ -192,8 +193,7 @@ async def resume_contract(
         "edited_risks": body.edited_risks,
     }
 
-    # TODO: wrap in asyncio.to_thread() if adding real LLM support.
-    graph.invoke(Command(resume=resume_value), config=config)
+    await asyncio.to_thread(graph.invoke, Command(resume=resume_value), config)
 
     final_state = graph.get_state(config).values
     return ResumeResponse(
