@@ -127,6 +127,18 @@ langgraph dev
 }
 ```
 
+## API deployment for website demos
+
+This repo also includes a FastAPI wrapper in [`api/main.py`](./api/main.py) for browser-based demos.
+
+If you want to power a public website demo, use the deployment checklist in [`DEPLOYMENT.md`](./DEPLOYMENT.md). It covers:
+
+- local API smoke testing
+- Railway deployment
+- Vercel `VITE_API_URL` wiring
+- CORS setup
+- demo-day caveats for interrupt/resume
+
 ## Audit outputs
 
 Every run produces local artifacts:
