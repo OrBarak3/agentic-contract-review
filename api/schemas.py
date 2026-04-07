@@ -33,6 +33,39 @@ class RunInterruptedResponse(BaseModel):
     interrupt_payload: dict[str, Any]
 
 
+class ReviewedRunResponse(BaseModel):
+    """Returned by GET /api/runs/{thread_id} and POST /api/resume/{thread_id}.
+
+    Represents a completed run that may have gone through human review.
+    review_decision is empty dict when no human input occurred.
+    """
+
+    status: Literal["completed"] = "completed"
+    thread_id: str
+    final_status: str
+    route: str
+    extractions: list[ClauseExtractionOut] = Field(default_factory=list)
+    review_decision: dict[str, Any] = Field(default_factory=dict)
+
+
+class PendingReviewOut(BaseModel):
+    thread_id: str
+    run_id: str
+    contract_id: str | None = None
+    file_name: str | None = None
+    contract_path: str | None = None
+    provider: str | None = None
+    policy_pack: str | None = None
+    route: str | None = None
+    review_status: Literal["pending"]
+    started_at: str
+    interrupted_at: str | None = None
+
+
+class PendingReviewsResponse(BaseModel):
+    items: list[PendingReviewOut] = Field(default_factory=list)
+
+
 class ResumeRequest(BaseModel):
     decision: Literal["approve", "edit", "reject"]
     reviewer_notes: str = ""
@@ -41,10 +74,3 @@ class ResumeRequest(BaseModel):
     edited_risks: list[dict[str, Any]] = Field(default_factory=list)
 
 
-class ResumeResponse(BaseModel):
-    status: Literal["completed"] = "completed"
-    thread_id: str
-    final_status: str
-    route: str
-    extractions: list[ClauseExtractionOut]
-    review_decision: dict[str, Any]

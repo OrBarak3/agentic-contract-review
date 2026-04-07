@@ -63,6 +63,7 @@
    - Finalizes clean, high-confidence contracts without human intervention.
 6. `human_review`
    - Uses LangGraph `interrupt()` to pause for a reviewer decision and optional edits.
+   - Persists the paused thread in a local SQLite checkpoint DB so the review can be resumed after a restart.
 7. `audit_and_report`
    - Persists the run and events locally and writes a human-readable report.
 
@@ -77,6 +78,7 @@ The current graph expects a payload shaped like:
   "contract_path": "/absolute/path/to/contract.txt",
   "provider": "openai",
   "policy_pack": "/absolute/path/to/policies/default_policy.yaml",
+  "thread_id": "optional-thread-id",
   "run_id": "optional-existing-id",
   "run_label": "optional-label"
 }
@@ -87,6 +89,7 @@ Notes:
 - `contract_path` is required.
 - `provider` defaults to `openai` when omitted.
 - `policy_pack` defaults to `policies/default_policy.yaml` when omitted.
+- `thread_id` is optional for Studio/manual runs and is the public API identifier for durable interrupt/resume flows.
 - `run_label` is accepted in state but is currently informational only.
 
 ### Human review resume payload
@@ -128,6 +131,7 @@ When the graph pauses in `human_review`, it currently resumes with:
 
 ### Storage
 - **SQLite** — local audit run registry and event storage.
+- **SQLite-backed LangGraph checkpointer** — durable local interrupt/resume state under `runtime/audit/checkpoints.sqlite3`.
 - **JSONL event log** — append-only, easy-to-inspect execution trace.
 - **Markdown reports** — per-run artifacts for demo and review.
 
@@ -147,6 +151,7 @@ When the graph pauses in `human_review`, it currently resumes with:
 - Current audit persistence includes:
   - a SQLite `runs` table with run metadata and final status
   - a SQLite `events` table with node-level event payloads
+  - a SQLite LangGraph checkpoint database for paused/resumable threads
   - an append-only JSONL event stream
   - a Markdown per-run summary report
 - Event payloads include useful execution metadata such as provider/model selection, policy reasons, and reviewer decision details when available.

@@ -6,7 +6,7 @@
 
 - **Runnable workflow, not just architecture** — The repo contains a real seven-node LangGraph Studio graph with a believable contract-review path.
 - **Clear governance model** — "AI proposes, policy decides, human approves" is still the strongest part of the project, and the code actually enforces it.
-- **Concrete human-in-the-loop control** — LangGraph `interrupt()` gives you a live reviewer checkpoint instead of a hand-wavy approval box in a diagram.
+- **Concrete human-in-the-loop control** — LangGraph `interrupt()` now gives you a live reviewer checkpoint with durable local resume instead of a hand-wavy approval box in a diagram.
 - **Local-first auditability** — SQLite, JSONL events, and Markdown reports make the execution trace easy to inspect during a demo.
 - **Provider flexibility with graceful degradation** — OpenAI, Gemini, and Grok are supported behind one interface, and heuristic fallback keeps the demo runnable even when credentials or APIs are unavailable.
 - **Good CE/SE framing** — The pilot metrics, policy-pack framing, and rollout language still speak to customer-engineering responsibilities rather than pure prototyping.
@@ -33,8 +33,8 @@ This is still the clearest missing technical story. The workflow evaluates polic
 ### 2. No downstream system action yet
 The flow currently ends with audit/reporting. That is a sensible MVP cutoff, but it means there is no CRM, ticketing, procurement, or e-sign step proving the last-mile operational story.
 
-### 3. Reviewer UX is still Studio-native
-That is fine for a portfolio demo. It is not yet a customer-shaped operator experience for Legal Ops or Procurement teams.
+### 3. Reviewer UX is still thin, even though recovery is better
+The repo now has a more credible reviewer story because interrupted runs survive restarts and the API exposes pending-review/status endpoints. It is still not yet a full customer-shaped operator experience for Legal Ops or Procurement teams.
 
 ### 4. Audit lineage is useful but still lightweight
 The current artifacts are strong for local inspection, but they are not yet a full experiment ledger. Prompt versioning, richer actor metadata, and clearer run-to-run comparison surfaces would strengthen the governance story further.
@@ -48,7 +48,7 @@ The system extracts, classifies, routes, and records decisions, but it does not 
 |---|---|
 | High | Add retrieval grounding against approved clauses or policy exemplars |
 | High | Add one post-decision integration, even if stubbed, such as a CRM-style status update |
-| Medium | Add a lightweight reviewer-facing surface on top of the Studio interrupt/resume flow |
+| Medium | Add a lightweight reviewer-facing surface on top of the new pending-review/status API flow |
 | Medium | Persist richer audit lineage such as prompt/version metadata and easier run comparison |
 | Medium | Add redline generation as a distinct post-extraction step |
 

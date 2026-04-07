@@ -6,7 +6,14 @@ from typing import Any
 
 from langgraph.types import interrupt
 
-from contract_review_langgraph.audit import append_event, register_run, write_report, finalize_run
+from contract_review_langgraph.audit import (
+    append_event,
+    finalize_run,
+    mark_review_completed,
+    mark_review_pending,
+    register_run,
+    write_report,
+)
 from contract_review_langgraph.config import get_paths
 from contract_review_langgraph.llm import extract_contract_details
 from contract_review_langgraph.parsing import UnsupportedDocumentError, chunk_into_clauses, compute_file_hash, normalize_text, read_contract
@@ -15,11 +22,14 @@ from contract_review_langgraph.policies import evaluate_policy, load_policy_pack
 
 def ingest_contract(state: dict[str, Any]) -> dict[str, Any]:
     contract_path = Path(state["contract_path"]).expanduser()
-    run_id = state.get("run_id") or str(uuid.uuid4())
+    thread_id = state.get("thread_id") or state.get("run_id")
+    run_id = state.get("run_id") or thread_id or str(uuid.uuid4())
     if not contract_path.exists() or not contract_path.is_file():
         failed_state = {
             "run_id": run_id,
+            "thread_id": thread_id or run_id,
             "route": "audit_only",
+            "review_status": "not_required",
             "final_status": "failed",
             "error": f"contract_path_not_found:{contract_path}",
             "contract_path": str(contract_path),
@@ -32,6 +42,7 @@ def ingest_contract(state: dict[str, Any]) -> dict[str, Any]:
     contract_id = contract_hash[:12]
     next_state = {
         "run_id": run_id,
+        "thread_id": thread_id or run_id,
         "contract_id": contract_id,
         "contract_hash": contract_hash,
         "file_name": contract_path.name,
@@ -39,6 +50,7 @@ def ingest_contract(state: dict[str, Any]) -> dict[str, Any]:
         "provider": state.get("provider", "openai"),
         "policy_pack": state.get("policy_pack") or str(get_paths().default_policy_path),
         "parse_status": "pending",
+        "review_status": "not_required",
     }
     register_run(next_state)
     append_event(
@@ -177,6 +189,7 @@ def check_policy_rules(state: dict[str, Any]) -> dict[str, Any]:
 def auto_advance_standard_cases(state: dict[str, Any]) -> dict[str, Any]:
     result = {
         "final_status": "approved_automatically",
+        "review_status": "not_required",
         "review_decision": {
             "decision": "auto_approve",
             "reviewer_notes": "Policy auto-pass conditions satisfied.",
@@ -194,6 +207,7 @@ def auto_advance_standard_cases(state: dict[str, Any]) -> dict[str, Any]:
 def human_review(state: dict[str, Any]) -> dict[str, Any]:
     payload = {
         "action_required": "review_contract",
+        "thread_id": state.get("thread_id", state.get("run_id")),
         "contract_id": state.get("contract_id"),
         "route": state.get("route"),
         "policy_reasons": state.get("policy_results", {}).get("reasons", []),
@@ -209,7 +223,26 @@ def human_review(state: dict[str, Any]) -> dict[str, Any]:
             },
         },
     }
+    if mark_review_pending(state["run_id"]):
+        append_event(
+            state["run_id"],
+            "human_review",
+            "human_review_pending",
+            {
+                "thread_id": state.get("thread_id"),
+                "policy_reasons": state.get("policy_results", {}).get("reasons", []),
+            },
+        )
     response = interrupt(payload)
+    if mark_review_completed(state["run_id"]):
+        append_event(
+            state["run_id"],
+            "human_review",
+            "human_review_resumed",
+            {
+                "thread_id": state.get("thread_id"),
+            },
+        )
     normalized = _normalize_review_response(response)
     updated_extractions = _apply_reviewer_edits(
         state.get("extractions", []),
@@ -238,6 +271,7 @@ def human_review(state: dict[str, Any]) -> dict[str, Any]:
     return {
         "review_decision": normalized,
         "extractions": updated_extractions,
+        "review_status": "completed",
         "final_status": final_status,
     }
 

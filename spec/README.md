@@ -30,7 +30,7 @@ The implemented MVP currently focuses on:
 - provider-backed extraction for `openai`, `gemini`, and `grok`
 - heuristic fallback when provider calls fail and fallback is enabled
 - deterministic policy routing
-- Studio-based human review interrupt
+- Studio-based human review interrupt with durable local resume
 - local audit and reporting
 
 The docs may still discuss broader future capabilities such as redlines, retrieval grounding, or business-system integrations. Those should be treated as next-step roadmap items unless the code explicitly supports them.

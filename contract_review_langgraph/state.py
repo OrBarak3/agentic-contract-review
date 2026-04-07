@@ -9,6 +9,7 @@ class ContractReviewState(TypedDict, total=False):
     policy_pack: str
     run_label: str
     run_id: str
+    thread_id: str
     contract_id: str
     contract_hash: str
     file_type: str
@@ -23,9 +24,9 @@ class ContractReviewState(TypedDict, total=False):
     policy_pack_name: str
     policy_pack_version: str
     route: str
+    review_status: str
     review_decision: dict[str, Any]
     audit_events: list[dict[str, Any]]
     final_status: str
     report_path: str
     error: str
-

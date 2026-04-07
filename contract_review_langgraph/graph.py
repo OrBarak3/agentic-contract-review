@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 
+from contract_review_langgraph.checkpointing import create_checkpointer
 from contract_review_langgraph.nodes import (
     audit_and_report,
     auto_advance_standard_cases,
@@ -35,24 +35,35 @@ def _after_policy(state: ContractReviewState) -> str:
     return "audit_and_report"
 
 
-builder = StateGraph(ContractReviewState)
-builder.add_node("ingest_contract", ingest_contract)
-builder.add_node("parse_and_chunk_clauses", parse_and_chunk_clauses)
-builder.add_node("extract_details_and_flag_risk", extract_details_and_flag_risk)
-builder.add_node("check_policy_rules", check_policy_rules)
-builder.add_node("auto_advance_standard_cases", auto_advance_standard_cases)
-builder.add_node("human_review", human_review)
-builder.add_node("audit_and_report", audit_and_report)
+def _build_state_graph() -> StateGraph:
+    builder = StateGraph(ContractReviewState)
+    builder.add_node("ingest_contract", ingest_contract)
+    builder.add_node("parse_and_chunk_clauses", parse_and_chunk_clauses)
+    builder.add_node("extract_details_and_flag_risk", extract_details_and_flag_risk)
+    builder.add_node("check_policy_rules", check_policy_rules)
+    builder.add_node("auto_advance_standard_cases", auto_advance_standard_cases)
+    builder.add_node("human_review", human_review)
+    builder.add_node("audit_and_report", audit_and_report)
 
-builder.add_edge(START, "ingest_contract")
-builder.add_conditional_edges("ingest_contract", _after_ingest)
-builder.add_conditional_edges("parse_and_chunk_clauses", _after_parse)
-builder.add_edge("extract_details_and_flag_risk", "check_policy_rules")
-builder.add_conditional_edges("check_policy_rules", _after_policy)
-builder.add_edge("auto_advance_standard_cases", "audit_and_report")
-builder.add_edge("human_review", "audit_and_report")
-builder.add_edge("audit_and_report", END)
+    builder.add_edge(START, "ingest_contract")
+    builder.add_conditional_edges("ingest_contract", _after_ingest)
+    builder.add_conditional_edges("parse_and_chunk_clauses", _after_parse)
+    builder.add_edge("extract_details_and_flag_risk", "check_policy_rules")
+    builder.add_conditional_edges("check_policy_rules", _after_policy)
+    builder.add_edge("auto_advance_standard_cases", "audit_and_report")
+    builder.add_edge("human_review", "audit_and_report")
+    builder.add_edge("audit_and_report", END)
+    return builder
 
-# A local checkpointer is required for interrupt-based review workflows.
-graph = builder.compile(checkpointer=InMemorySaver())
 
+def build_graph(*, checkpointer=None, checkpointer_kind: str | None = None, checkpoint_path=None):
+    saver = checkpointer
+    if saver is None:
+        saver = create_checkpointer(
+            kind=checkpointer_kind,
+            checkpoint_path=checkpoint_path,
+        )
+    return _build_state_graph().compile(checkpointer=saver)
+
+
+graph = build_graph()
