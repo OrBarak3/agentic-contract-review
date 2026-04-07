@@ -17,6 +17,8 @@ The website frontend is expected to call:
 
 - `POST /api/run`
 - `POST /api/resume/{thread_id}`
+- `GET /api/runs/{thread_id}`
+- `GET /api/pending-reviews`
 - `GET /api/health`
 
 ## Current implementation realities
@@ -25,14 +27,14 @@ These are important demo-day constraints:
 
 - The API wrapper currently invokes the graph with `provider="openai"`.
 - If `OPENAI_API_KEY` is missing and `ALLOW_HEURISTIC_FALLBACK=true`, the demo can still run on the deterministic local fallback path.
-- Interrupt/resume state is stored in LangGraph `InMemorySaver()`.
+- Interrupt/resume state is stored in a SQLite-backed LangGraph checkpointer.
 - Audit and report artifacts are written to local disk under `runtime/`.
 
 What this means in practice:
 
 - For the website demo, `OPENAI_API_KEY` is the most important provider credential to set.
-- Resume only works while the same backend process is alive.
-- Restarts or multi-instance scaling can break interrupted-thread resume.
+- Resume survives backend restarts as long as the same local checkpoint file is still available.
+- Multi-instance scaling can still break interrupted-thread resume unless replicas share the same checkpoint database.
 - Railway disk artifacts are useful for short-lived demos, but they are not durable production storage.
 
 ## Recommended deployment shape
@@ -78,6 +80,7 @@ Start from [`.env.example`](./.env.example). For the website demo, these are the
 
 - `OPENAI_BASE_URL`
 - `DEFAULT_PROVIDER`
+- `LANGGRAPH_CHECKPOINTER`
 - `GEMINI_API_KEY`
 - `GROK_API_KEY`
 - `GEMINI_MODEL`
@@ -137,6 +140,12 @@ curl -X POST http://localhost:8000/api/run \
 
 If the backend responds with `status: "interrupted"` or `status: "completed"`, the wrapper is working.
 
+6. Optional: confirm the reviewer inbox endpoint.
+
+```bash
+curl http://localhost:8000/api/pending-reviews
+```
+
 ## Railway deployment
 
 This repo already includes:
@@ -169,6 +178,7 @@ Minimum recommended values:
 OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-4.1-mini
 ALLOW_HEURISTIC_FALLBACK=true
+LANGGRAPH_CHECKPOINTER=sqlite
 CORS_ALLOWED_ORIGINS=https://your-vercel-domain.vercel.app,https://your-custom-domain.com,http://localhost:5173
 ```
 
@@ -235,6 +245,7 @@ Use this exact checklist after both deploys are live.
 - Verify a high-risk contract reaches the interrupted human-review path
 - Submit approve, edit, and reject review actions at least once
 - Confirm the UI shows final status after resume
+- Confirm `GET /api/runs/{thread_id}` still returns the interrupted review state after a backend restart
 
 ### Failure-mode checks
 
@@ -260,7 +271,6 @@ Use this on the day of the portfolio demo.
 
 - Use text input if you want the most controlled path
 - Use file upload only after confirming upload behavior live
-- Avoid restarting Railway between `/api/run` and `/api/resume`
 - Avoid scaling to multiple replicas during the demo
 
 ### If something goes wrong
@@ -275,8 +285,8 @@ Use this on the day of the portfolio demo.
 
 These are worth knowing ahead of time so they do not surprise you:
 
-- Resume state is in-memory only, so interrupted runs do not survive process restarts.
-- Multiple backend replicas are not safe for interrupt/resume in the current implementation.
+- Resume is durable only while the backend keeps access to `runtime/audit/checkpoints.sqlite3`.
+- Multiple backend replicas are not safe for interrupt/resume unless they share the same checkpoint database.
 - Runtime artifacts under `runtime/audit/` and `runtime/reports/` are local to the container filesystem.
 - The API wrapper does not yet expose provider selection to the frontend.
 - This deployment shape is appropriate for a demo and portfolio site, not a hardened production service.
@@ -285,10 +295,10 @@ These are worth knowing ahead of time so they do not surprise you:
 
 If you want the demo to be more robust for public traffic, the next backend improvements should be:
 
-1. Replace `InMemorySaver()` with a persistent LangGraph checkpointer.
-2. Move audit artifacts to durable storage.
-3. Add explicit provider selection to the API contract.
-4. Add authentication and stronger rate limiting.
+1. Move checkpoints and audit artifacts to shared durable storage.
+2. Add explicit provider selection to the API contract.
+3. Add authentication and stronger rate limiting.
+4. Upgrade from single-node SQLite to a shared production-grade checkpoint backend.
 
 ## Troubleshooting
 
@@ -318,15 +328,15 @@ Fix:
 
 Cause:
 
-- the process restarted
 - the thread was already resumed
-- the request hit a different instance
+- the local checkpoint file is missing
+- the request hit a different instance without shared checkpoint storage
 
 Fix:
 
 - rerun the demo flow from the beginning
-- keep the service on one instance
-- avoid restarts during the demo session
+- keep the service on one instance unless replicas share the same checkpoint DB
+- confirm `runtime/audit/checkpoints.sqlite3` still exists on the active instance
 
 ### The demo works but looks less intelligent than expected
 
@@ -348,6 +358,7 @@ Fix:
 [ ] OPENAI_API_KEY set in Railway
 [ ] OPENAI_MODEL set in Railway
 [ ] ALLOW_HEURISTIC_FALLBACK=true set in Railway
+[ ] LANGGRAPH_CHECKPOINTER=sqlite set in Railway
 [ ] CORS_ALLOWED_ORIGINS includes Vercel domain and localhost
 [ ] Railway deploy succeeds
 [ ] /api/health returns 200
@@ -357,5 +368,6 @@ Fix:
 [ ] File-upload demo path tested
 [ ] Interrupted review path tested
 [ ] Resume path tested
+[ ] /api/pending-reviews tested
 [ ] Service kept to one instance for demo
 ```

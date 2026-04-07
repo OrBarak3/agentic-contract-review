@@ -33,6 +33,7 @@ Show a believable end-to-end enterprise workflow that combines AI agents, policy
    - Contract B routes to human review due to high-risk clause.
 4. Human Review (5 minutes)
    - Reviewer uses the LangGraph interrupt to edit risk tags or approve/reject Contract B.
+   - If helpful, show that the interrupted review can be reloaded through `GET /api/runs/{thread_id}` after a backend restart.
    - Reviewer approves final action.
 5. Audit + Reporting (4 minutes)
    - Node-level event history with provider/model metadata, policy reasons, and reviewer action.
@@ -94,6 +95,7 @@ When the high-risk contract pauses in `human_review`, resume with a payload like
 - Processing timeline view per contract.
 - Clause extraction JSON (cleanly formatted).
 - Human review interrupt payload and resume action.
+- Reviewer inbox or pending-review API response.
 - Audit trail table.
 - KPI scorecard.
 - One generated Markdown report from `runtime/reports/`.

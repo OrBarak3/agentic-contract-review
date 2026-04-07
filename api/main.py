@@ -13,14 +13,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from contract_review_langgraph.config import ensure_runtime_dirs
+from contract_review_langgraph.audit import get_run, list_pending_reviews
 from contract_review_langgraph.graph import graph
 from langgraph.types import Command
 
 from api.rate_limit import InMemoryRateLimiter
 from api.schemas import (
     ClauseExtractionOut,
+    PendingReviewOut,
+    PendingReviewsResponse,
     ResumeRequest,
-    ResumeResponse,
+    ReviewedRunResponse,
     RunCompletedResponse,
     RunInterruptedResponse,
 )
@@ -65,6 +68,10 @@ def _get_interrupt_payload(config: dict[str, Any]) -> dict[str, Any] | None:
     return None
 
 
+def _get_state_values(config: dict[str, Any]) -> dict[str, Any]:
+    return graph.get_state(config).values
+
+
 def _serialize_extractions(raw: list[dict[str, Any]]) -> list[ClauseExtractionOut]:
     results = []
     for item in raw:
@@ -89,6 +96,61 @@ def _check_rate_limit(request: Request) -> None:
 @app.get("/api/health")
 async def health() -> dict[str, str]:
     return {"status": "ok", "service": "contract-review-api"}
+
+
+@app.get("/api/runs/{thread_id}")
+async def get_run_status(thread_id: str, request: Request) -> JSONResponse:
+    _check_rate_limit(request)
+
+    run = get_run(thread_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail=f"No run found for thread_id={thread_id!r}.")
+
+    config: dict[str, Any] = {"configurable": {"thread_id": thread_id}}
+    interrupt_payload = _get_interrupt_payload(config)
+    if interrupt_payload is not None:
+        return JSONResponse(
+            RunInterruptedResponse(
+                status="interrupted",
+                thread_id=thread_id,
+                interrupt_payload=interrupt_payload,
+            ).model_dump()
+        )
+
+    final_state = _get_state_values(config)
+    return JSONResponse(
+        ReviewedRunResponse(
+            status="completed",
+            thread_id=thread_id,
+            final_status=final_state.get("final_status", run.get("final_status", "unknown")),
+            route=final_state.get("route", run.get("route", "unknown")),
+            extractions=_serialize_extractions(final_state.get("extractions", [])),
+            review_decision=final_state.get("review_decision", {}),
+        ).model_dump()
+    )
+
+
+@app.get("/api/pending-reviews")
+async def pending_reviews(request: Request) -> PendingReviewsResponse:
+    _check_rate_limit(request)
+
+    items = [
+        PendingReviewOut(
+            thread_id=item.get("thread_id") or item["run_id"],
+            run_id=item["run_id"],
+            contract_id=item.get("contract_id"),
+            file_name=item.get("file_name"),
+            contract_path=item.get("contract_path"),
+            provider=item.get("provider"),
+            policy_pack=item.get("policy_pack"),
+            route=item.get("route"),
+            review_status="pending",
+            started_at=item["started_at"],
+            interrupted_at=item.get("interrupted_at"),
+        )
+        for item in list_pending_reviews()
+    ]
+    return PendingReviewsResponse(items=items)
 
 
 @app.post("/api/run")
@@ -128,13 +190,21 @@ async def run_contract(
                 tmp_path = Path(tmp.name)
 
         thread_id = str(uuid.uuid4())
+        # thread_id and run_id are intentionally the same UUID.
+        # LangGraph uses thread_id for checkpoint continuity; the audit DB uses run_id
+        # as the primary key. Keeping them equal means one UUID identifies a run everywhere.
         config: dict[str, Any] = {"configurable": {"thread_id": thread_id}}
 
         # "provider": "openai" with no OPENAI_API_KEY triggers heuristic fallback.
         # To use a real LLM, set the relevant API key in the environment.
         await asyncio.to_thread(
             graph.invoke,
-            {"contract_path": str(tmp_path), "provider": "openai"},
+            {
+                "contract_path": str(tmp_path),
+                "provider": "openai",
+                "thread_id": thread_id,
+                "run_id": thread_id,
+            },
             config,
         )
 
@@ -148,7 +218,7 @@ async def run_contract(
                 ).model_dump()
             )
 
-        final_state = graph.get_state(config).values
+        final_state = _get_state_values(config)
         return JSONResponse(
             RunCompletedResponse(
                 status="completed",
@@ -173,7 +243,7 @@ async def resume_contract(
     thread_id: str,
     body: ResumeRequest,
     request: Request,
-) -> ResumeResponse:
+) -> ReviewedRunResponse:
     _check_rate_limit(request)
 
     config: dict[str, Any] = {"configurable": {"thread_id": thread_id}}
@@ -195,8 +265,8 @@ async def resume_contract(
 
     await asyncio.to_thread(graph.invoke, Command(resume=resume_value), config)
 
-    final_state = graph.get_state(config).values
-    return ResumeResponse(
+    final_state = _get_state_values(config)
+    return ReviewedRunResponse(
         status="completed",
         thread_id=thread_id,
         final_status=final_state.get("final_status", "unknown"),

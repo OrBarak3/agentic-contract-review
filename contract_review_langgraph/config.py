@@ -13,6 +13,7 @@ class AppPaths:
     reports_dir: Path
     audit_db_path: Path
     audit_log_path: Path
+    checkpoint_db_path: Path
     default_policy_path: Path
 
 
@@ -32,6 +33,7 @@ def get_paths() -> AppPaths:
         reports_dir=reports_dir,
         audit_db_path=audit_dir / "audit.sqlite3",
         audit_log_path=audit_dir / "events.jsonl",
+        checkpoint_db_path=audit_dir / "checkpoints.sqlite3",
         default_policy_path=root / "policies" / "default_policy.yaml",
     )
 
@@ -49,3 +51,10 @@ def env_flag(name: str, default: bool = False) -> bool:
         return default
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
+
+def env_value(name: str, default: str) -> str:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    stripped = value.strip()
+    return stripped or default

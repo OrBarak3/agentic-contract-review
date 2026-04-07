@@ -22,8 +22,9 @@ Current MVP scope:
 - One LangGraph workflow with exactly 7 top-level nodes
 - Multi-provider LLM adapter for `OpenAI`, `Gemini`, and `Grok`
 - Deterministic policy routing
-- Human-in-the-loop approval via LangGraph `interrupt()`
+- Human-in-the-loop approval via LangGraph `interrupt()` with durable local resume
 - SQLite + JSONL audit logging
+- SQLite-backed LangGraph checkpoints for restart-safe local review recovery
 - Markdown run reports under `runtime/reports/`
 
 Deferred from this first pass:
@@ -67,6 +68,7 @@ auto_advance_standard_cases  human_review
 ```text
 contract_review_langgraph/
   graph.py
+  checkpointing.py
   nodes.py
   llm.py
   parsing.py
@@ -103,7 +105,9 @@ langgraph dev
 }
 ```
 
-5. If the graph pauses in `human_review`, resume the same thread with a payload like:
+5. By default, `LANGGRAPH_CHECKPOINTER=sqlite`, so interrupted review threads persist to `runtime/audit/checkpoints.sqlite3` and can be resumed after a local process restart.
+
+6. If the graph pauses in `human_review`, resume the same thread with a payload like:
 
 ```json
 {
@@ -131,6 +135,14 @@ langgraph dev
 
 This repo also includes a FastAPI wrapper in [`api/main.py`](./api/main.py) for browser-based demos.
 
+Current API surface:
+
+- `POST /api/run`
+- `POST /api/resume/{thread_id}`
+- `GET /api/runs/{thread_id}`
+- `GET /api/pending-reviews`
+- `GET /api/health`
+
 If you want to power a public website demo, use the deployment checklist in [`DEPLOYMENT.md`](./DEPLOYMENT.md). It covers:
 
 - local API smoke testing
@@ -144,6 +156,7 @@ If you want to power a public website demo, use the deployment checklist in [`DE
 Every run produces local artifacts:
 
 - SQLite DB: `runtime/audit/audit.sqlite3`
+- SQLite checkpoints: `runtime/audit/checkpoints.sqlite3`
 - JSONL event stream: `runtime/audit/events.jsonl`
 - Markdown report: `runtime/reports/<run_id>.md`
 
