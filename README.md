@@ -12,6 +12,50 @@ The graph is intentionally shaped around 7 business nodes:
 6. Risky or uncertain cases pause for a human reviewer.
 7. Every decision is logged for audit and reporting.
 
+## Graph shape
+
+```
+                              START
+                                │
+                                ▼
+                       ingest_contract
+                       /              \
+               [failed]                [ok]
+                  │                      │
+                  │           parse_and_chunk_clauses
+                  │           /                     \
+                  │   [parse failed]              [parsed]
+                  │       │                          │
+                  │       │             extract_details_and_flag_risk
+                  │       │                          │
+                  │       │                 check_policy_rules
+                  │       │            /         |          \
+                  │       │   [auto_advance] [human_review] [other]
+                  │       │        │               │            │
+                  │       │  auto_advance_   human_review ⚡    │
+                  │       │  standard_cases  (interrupt)        │
+                  │       │        │               │            │
+                  └───────┴────────┴───────────────┴────────────┘
+                                                │
+                                        audit_and_report
+                                                │
+                                               END
+```
+
+**Routing summary:**
+
+| From | Condition | To |
+|---|---|---|
+| `ingest_contract` | `final_status == "failed"` | `audit_and_report` |
+| `ingest_contract` | otherwise | `parse_and_chunk_clauses` |
+| `parse_and_chunk_clauses` | `parse_status != "parsed"` | `audit_and_report` |
+| `parse_and_chunk_clauses` | `parse_status == "parsed"` | `extract_details_and_flag_risk` |
+| `check_policy_rules` | `route == "auto_advance"` | `auto_advance_standard_cases` |
+| `check_policy_rules` | `route == "human_review"` | `human_review` ⚡ |
+| `check_policy_rules` | otherwise | `audit_and_report` |
+
+⚡ `human_review` uses `interrupt()` — the graph pauses here and resumes on the same thread after a reviewer decision.
+
 ## What this repo is now
 
 This repo started as a spec pack. It now includes a runnable Python LangGraph project that can be opened in LangGraph Studio and demoed locally against contract files on your Mac.
@@ -33,35 +77,6 @@ Deferred from this first pass:
 - CRM / ticketing / e-sign integrations
 - Redline generation
 - Production auth / multi-tenancy
-
-## Graph shape
-
-```text
-START
-  |
-  v
-ingest_contract
-  |
-  v
-parse_and_chunk_clauses
-  |
-  v
-extract_details_and_flag_risk
-  |
-  v
-check_policy_rules
-  |--------------------------+
-  v                          v
-auto_advance_standard_cases  human_review
-  |                          |
-  +------------->------------+
-                |
-                v
-         audit_and_report
-                |
-                v
-               END
-```
 
 ## Project structure
 
